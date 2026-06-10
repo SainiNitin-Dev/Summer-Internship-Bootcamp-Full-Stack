@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Day 3</title>
+</head>
+<body>
+    
+    <h1>Today we will learn about JS Event Listeners.</h1>
+    <button>Click Me!</button>
+
+    <script>
+        const button = document.querySelector("button");
+        const h1 = document.querySelector("h1");
+        button.addEventListener('click', function() {
+            h1.textContent = 'You clicked the button!';
+            h1.style.color = 'red';
+        });
+    </script>
+</body>
+</html>
