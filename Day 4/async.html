@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Day 4</title>
+</head>
+<body>  
+    <script>
+    const promise = new Promise((resolve, reject) => {
+        setTimeout(() => {
+            resolve("Promise resolved!");
+        }, 2000);
+    });
+    async function asyncFunction() {
+        console.log("Waiting for the promise...");
+        const result = await promise;
+        console.log(result);
+    }
+    
+    //Async functions always return a promise, so we can use .then() to handle the result or .catch() to handle errors.
+    //After await keyword always use a promise, if the promise is resolved, it will return the resolved value, if the promise is rejected, it will throw an error that can be caught using try/catch block.
+    //Async and await manages promises in a better way, it makes the code look more synchronous and easier to read, it also allows us to handle errors more easily using try/catch blocks.
+    asyncFunction()
+    </script>
+</body>
+</html>
