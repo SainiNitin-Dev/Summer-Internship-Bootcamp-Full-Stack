@@ -64,6 +64,8 @@ function normalizeWeather(currentJson, forecastJson, fallbackCity, location) {
     temp: kelvinToC(item.main.temp),
     feelsLike: kelvinToC(item.main.feels_like),
     condition: item.weather?.[0]?.main || "Clear",
+    description: item.weather?.[0]?.description || item.weather?.[0]?.main || "Clear",
+    cloudCover: item.clouds?.all ?? null,
     rainChance: Math.round((item.pop || 0) * 100),
     windKmh: msToKmh(item.wind?.speed || 0),
     humidity: item.main.humidity
@@ -79,6 +81,7 @@ function normalizeWeather(currentJson, forecastJson, fallbackCity, location) {
       max: -99,
       condition: item.weather?.[0]?.main || "Clear",
       rainChance: 0,
+      cloudCover: 0,
       humidity: 0,
       windKmh: 0,
       pressure: 0,
@@ -90,6 +93,7 @@ function normalizeWeather(currentJson, forecastJson, fallbackCity, location) {
     existing.min = Math.min(existing.min, kelvinToC(item.main.temp_min));
     existing.max = Math.max(existing.max, kelvinToC(item.main.temp_max));
     existing.rainChance = Math.max(existing.rainChance, Math.round((item.pop || 0) * 100));
+    existing.cloudCover += item.clouds?.all ?? 0;
     existing.humidity += item.main.humidity;
     existing.windKmh += msToKmh(item.wind?.speed || 0);
     existing.pressure += item.main.pressure;
@@ -103,6 +107,7 @@ function normalizeWeather(currentJson, forecastJson, fallbackCity, location) {
     max: day.max,
     condition: day.condition,
     rainChance: day.rainChance,
+    cloudCover: Math.round(day.cloudCover / day.count),
     humidity: Math.round(day.humidity / day.count),
     windKmh: Math.round(day.windKmh / day.count),
     pressure: Math.round(day.pressure / day.count),
@@ -121,6 +126,7 @@ function normalizeWeather(currentJson, forecastJson, fallbackCity, location) {
       feelsLike: kelvinToC(currentJson.main.feels_like),
       condition: currentJson.weather?.[0]?.main || "Clear",
       description: currentJson.weather?.[0]?.description || "Clear",
+      cloudCover: currentJson.clouds?.all ?? null,
       high: kelvinToC(currentJson.main.temp_max),
       low: kelvinToC(currentJson.main.temp_min),
       humidity: currentJson.main.humidity,

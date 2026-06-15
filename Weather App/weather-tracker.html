@@ -355,36 +355,25 @@
 
       .heart {
         position: relative;
-        flex: 0 0 1rem;
-        width: 1rem;
-        height: 1rem;
+        flex: 0 0 16px;
+        width: 16px;
+        height: 16px;
         display: inline-block;
         background: var(--faint);
-        transform: rotate(45deg);
+        transform: scale(1);
+        -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 21.35 10.55 20.03C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.08C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35Z'/%3E%3C/svg%3E") center / contain no-repeat;
+        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 21.35 10.55 20.03C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.08C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35Z'/%3E%3C/svg%3E") center / contain no-repeat;
         transition: background 220ms ease, transform 260ms var(--ease-spring);
       }
 
       .heart::before,
       .heart::after {
-        content: "";
-        position: absolute;
-        width: 1rem;
-        height: 1rem;
-        border-radius: 50%;
-        background: inherit;
-      }
-
-      .heart::before {
-        left: -0.5rem;
-      }
-
-      .heart::after {
-        top: -0.5rem;
+        content: none;
       }
 
       .save-button.saved .heart {
         background: #ff4d7d;
-        transform: rotate(45deg) scale(1.2);
+        transform: scale(1.14);
         animation: heartSettle 520ms var(--ease-spring);
       }
 
@@ -1267,9 +1256,9 @@
       }
 
       @keyframes heartSettle {
-        0% { transform: rotate(45deg) scale(0.9); }
-        46% { transform: rotate(45deg) scale(1.38); }
-        100% { transform: rotate(45deg) scale(1.06); }
+        0% { transform: scale(0.9); }
+        46% { transform: scale(1.38); }
+        100% { transform: scale(1.14); }
       }
 
       @keyframes fadeIn {
@@ -1515,12 +1504,26 @@
         return cityAliases[clean.toLowerCase()] || clean;
       }
 
-      function inferTheme(condition, date = new Date()) {
+      function localWeatherHour(date = new Date(), timezoneOffset = null) {
+        const timestamp = new Date(date).getTime();
+        if (Number.isFinite(Number(timezoneOffset))) {
+          return new Date(timestamp + Number(timezoneOffset) * 1000).getUTCHours();
+        }
+        return new Date(date).getHours();
+      }
+
+      function inferTheme(condition, date = new Date(), cloudCover = null, timezoneOffset = null) {
         const value = String(condition || "").toLowerCase();
-        const hour = date.getHours();
+        const hour = localWeatherHour(date, timezoneOffset);
+        const cloudAmount = cloudCover == null ? null : Number(cloudCover);
+        const isNight = hour >= 19 || hour <= 5;
         if (value.includes("rain") || value.includes("drizzle") || value.includes("thunder")) return "rain";
-        if (value.includes("cloud") || value.includes("mist") || value.includes("fog")) return "cloudy";
-        if (hour >= 19 || hour <= 5) return "night";
+        if (value.includes("mist") || value.includes("fog") || value.includes("haze") || value.includes("smoke")) return "cloudy";
+        if (isNight && (!value.includes("cloud") || value.includes("few clouds") || (cloudAmount != null && cloudAmount <= 35))) return "night";
+        if (value.includes("clear") || value.includes("sun")) return isNight ? "night" : "sunny";
+        if (value.includes("few clouds") || value.includes("scattered clouds") || (cloudAmount != null && cloudAmount <= 40)) return isNight ? "night" : "sunny";
+        if (value.includes("cloud") || (cloudAmount != null && cloudAmount > 40)) return "cloudy";
+        if (isNight) return "night";
         return "sunny";
       }
 
@@ -1657,8 +1660,8 @@
         requestAnimationFrame(tick);
       }
 
-      function iconSVG(condition) {
-        const theme = inferTheme(condition);
+      function iconSVG(condition, cloudCover = null) {
+        const theme = inferTheme(condition, new Date(), cloudCover);
         if (theme === "rain") {
           return `
             <svg class="weather-icon" viewBox="0 0 48 48" aria-hidden="true">
@@ -1842,7 +1845,7 @@
           .map((hour, index) => `
             <button class="hour-pill ${index === state.activeHour ? "active" : ""}" data-hour="${index}" type="button">
               <div class="hour-time">${index === 0 ? "Now" : formatHour(hour.time)}</div>
-              ${iconSVG(hour.condition)}
+              ${iconSVG(`${hour.condition || ""} ${hour.description || ""}`, hour.cloudCover)}
               <div class="hour-temp">${temp(hour.temp)}</div>
               <div class="hour-rain">${hour.rainChance}% rain</div>
             </button>
@@ -1857,7 +1860,7 @@
             <div class="forecast-item ${index === state.expandedDay ? "open" : ""}" data-day="${index}">
               <button class="forecast-row glass" type="button">
                 <span class="forecast-day">${index === 0 ? "Today" : formatDay(day.date)}</span>
-                ${iconSVG(day.condition)}
+                ${iconSVG(day.condition, day.cloudCover)}
                 <span class="forecast-rain">${day.rainChance}%</span>
                 <span class="forecast-temps">${temp(day.max)} <span>${temp(day.min)}</span></span>
               </button>
@@ -1994,7 +1997,8 @@
           renderUnavailable(state.city, "Live OpenWeather data is required.");
           return;
         }
-        const theme = inferTheme(state.weather.current.condition, state.weather.updatedAt);
+        const current = state.weather.current;
+        const theme = inferTheme(`${current.condition || ""} ${current.description || ""}`, state.weather.updatedAt, current.cloudCover, state.weather.timezoneOffset);
         applyTheme(theme);
         els.searchInput.value = state.weather.city;
         renderHero(previousTemp);
@@ -2320,52 +2324,55 @@
 
         function drawHeroSun(time) {
           const { x, y } = heroIllustrationCenter();
-          const size = clamp(height * 0.46, 260, 480);
-          const core = size * 0.18;
-          const rotation = time * 0.000035;
-          const pulse = 1 + Math.sin(time * 0.0008) * 0.055;
+          const size = clamp(height * 0.52, 320, 560);
+          const core = clamp(size * 0.24, 92, 150);
+          const pulse = 1 + Math.sin(time * 0.00075) * 0.04;
+          const drift = Math.sin(time * 0.00022) * core * 0.08;
 
           ctx.save();
           ctx.globalCompositeOperation = "screen";
-          const aura = ctx.createRadialGradient(x, y, core * 0.4, x, y, size * 0.9 * pulse);
-          aura.addColorStop(0, "rgba(255,213,79,0.72)");
-          aura.addColorStop(0.28, "rgba(255,143,0,0.24)");
-          aura.addColorStop(0.7, "rgba(255,213,79,0.06)");
-          aura.addColorStop(1, "rgba(255,143,0,0)");
-          ctx.fillStyle = aura;
+          const outerGlow = ctx.createRadialGradient(x, y, core * 0.15, x, y, size * 1.05 * pulse);
+          outerGlow.addColorStop(0, "rgba(255,245,198,0.42)");
+          outerGlow.addColorStop(0.2, "rgba(255,213,79,0.26)");
+          outerGlow.addColorStop(0.5, "rgba(255,143,0,0.11)");
+          outerGlow.addColorStop(0.78, "rgba(255,213,79,0.035)");
+          outerGlow.addColorStop(1, "rgba(255,143,0,0)");
+          ctx.fillStyle = outerGlow;
           ctx.beginPath();
-          ctx.arc(x, y, size * 0.9 * pulse, 0, Math.PI * 2);
+          ctx.arc(x, y, size * 1.05 * pulse, 0, Math.PI * 2);
           ctx.fill();
 
-          ctx.translate(x, y);
-          ctx.rotate(rotation);
-          for (let i = 0; i < 18; i++) {
-            ctx.rotate((Math.PI * 2) / 18);
-            const beam = ctx.createLinearGradient(core * 0.8, 0, size * 0.82, 0);
-            beam.addColorStop(0, "rgba(255,245,190,0.18)");
-            beam.addColorStop(0.72, "rgba(255,213,79,0.04)");
-            beam.addColorStop(1, "rgba(255,143,0,0)");
-            ctx.fillStyle = beam;
-            ctx.beginPath();
-            ctx.moveTo(core * 0.8, -3);
-            ctx.lineTo(size * 0.82, -12);
-            ctx.lineTo(size * 0.82, 12);
-            ctx.lineTo(core * 0.8, 3);
-            ctx.closePath();
-            ctx.fill();
-          }
+          const warmBloom = ctx.createRadialGradient(x - core * 0.2, y - core * 0.18, 0, x, y, core * 2.55 * pulse);
+          warmBloom.addColorStop(0, "rgba(255,255,228,0.3)");
+          warmBloom.addColorStop(0.32, "rgba(255,213,79,0.14)");
+          warmBloom.addColorStop(1, "rgba(255,143,0,0)");
+          ctx.fillStyle = warmBloom;
+          ctx.beginPath();
+          ctx.arc(x, y, core * 2.55 * pulse, 0, Math.PI * 2);
+          ctx.fill();
           ctx.restore();
 
           ctx.save();
-          ctx.shadowColor = "rgba(255,143,0,0.62)";
-          ctx.shadowBlur = 46;
-          const disc = ctx.createRadialGradient(x - core * 0.35, y - core * 0.42, core * 0.16, x, y, core);
+          ctx.shadowColor = "rgba(255,143,0,0.72)";
+          ctx.shadowBlur = 64;
+          const disc = ctx.createRadialGradient(x - core * 0.32 + drift, y - core * 0.38, core * 0.12, x, y, core);
           disc.addColorStop(0, "rgba(255,255,230,1)");
-          disc.addColorStop(0.45, "rgba(255,213,79,0.96)");
-          disc.addColorStop(1, "rgba(255,143,0,0.86)");
+          disc.addColorStop(0.36, "rgba(255,231,132,0.98)");
+          disc.addColorStop(0.74, "rgba(255,183,57,0.92)");
+          disc.addColorStop(1, "rgba(255,143,0,0.72)");
           ctx.fillStyle = disc;
           ctx.beginPath();
           ctx.arc(x, y, core * pulse, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.globalCompositeOperation = "screen";
+          const veil = ctx.createRadialGradient(x - core * 0.36, y - core * 0.36, 0, x, y, core * 0.98);
+          veil.addColorStop(0, "rgba(255,255,255,0.18)");
+          veil.addColorStop(0.45, "rgba(255,245,196,0.06)");
+          veil.addColorStop(1, "rgba(255,255,255,0)");
+          ctx.fillStyle = veil;
+          ctx.beginPath();
+          ctx.arc(x, y, core * 0.98, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
         }
@@ -2450,26 +2457,21 @@
           ctx.fillRect(0, 0, width, height);
 
           if (theme === "sunny") {
+            const center = heroIllustrationCenter();
             const pulse = 0.5 + Math.sin(time * 0.0007) * 0.08;
-            const radial = ctx.createRadialGradient(width * 0.72, height * 0.2, 0, width * 0.72, height * 0.2, width * pulse);
-            radial.addColorStop(0, "rgba(255,213,79,0.42)");
-            radial.addColorStop(0.34, "rgba(255,143,0,0.16)");
+            const radial = ctx.createRadialGradient(center.x, center.y, 0, center.x, center.y, width * pulse);
+            radial.addColorStop(0, "rgba(255,213,79,0.28)");
+            radial.addColorStop(0.34, "rgba(255,143,0,0.13)");
             radial.addColorStop(1, "rgba(255,143,0,0)");
             ctx.fillStyle = radial;
             ctx.fillRect(0, 0, width, height);
 
-            ctx.save();
-            ctx.translate(width * 0.74, height * 0.12);
-            ctx.rotate(time * 0.000035);
-            for (let i = 0; i < 9; i++) {
-              ctx.rotate((Math.PI * 2) / 9);
-              const ray = ctx.createLinearGradient(0, 0, width, 0);
-              ray.addColorStop(0, "rgba(255,255,255,0.12)");
-              ray.addColorStop(1, "rgba(255,255,255,0)");
-              ctx.fillStyle = ray;
-              ctx.fillRect(0, -1.5, width * 0.85, 3);
-            }
-            ctx.restore();
+            const lowGlow = ctx.createRadialGradient(width * 0.62, height * 0.98, 0, width * 0.62, height * 0.98, width * 0.72);
+            lowGlow.addColorStop(0, "rgba(255,183,57,0.13)");
+            lowGlow.addColorStop(0.55, "rgba(255,143,0,0.05)");
+            lowGlow.addColorStop(1, "rgba(255,143,0,0)");
+            ctx.fillStyle = lowGlow;
+            ctx.fillRect(0, 0, width, height);
           }
 
           if (theme === "night") {
