@@ -5,70 +5,67 @@ import ThemeToggle from "./components/ThemeToggle";
 import LikeButton from "./components/LikeButton";
 import TodoList from "./components/TodoList";
 import RegisterForm from "./components/RegisterForm";
+import "./App.css";
 
 function App() {
   const [count, setCount] = useState(0);
 
   return (
-    <div style={{ padding: "20px", maxWidth: "600px", margin: "auto" }}>
-      <h1>React Practice Components</h1>
+    <div className="app-container">
+      <header className="app-header">
+        <h1>React Practice Components</h1>
+      </header>
 
-      {/* Counter */}
-      <section>
-        <h2>1. Counter</h2>
-        <h3>Count: {count}</h3>
-        <button onClick={() => setCount(count + 1)}>Increase</button>
-        <button onClick={() => setCount(count - 1)}>Decrease</button>
-        <button onClick={() => setCount(0)}>Reset</button>
-      </section>
+      <div className="components-grid">
+        {/* Counter */}
+        <section className="component-card">
+          <h2>1. Counter</h2>
+          <div className="counter-display">
+            <h3>Count: {count}</h3>
+          </div>
+          <div className="button-group">
+            <button onClick={() => setCount(count + 1)} className="btn btn-increase">Increase</button>
+            <button onClick={() => setCount(count - 1)} className="btn btn-decrease">Decrease</button>
+            <button onClick={() => setCount(0)} className="btn btn-reset">Reset</button>
+          </div>
+        </section>
 
-      <hr />
+        {/* Cart Quantity */}
+        <section className="component-card">
+          <h2>2. Cart Quantity</h2>
+          <CartQuantity />
+        </section>
 
-      {/* Cart Quantity */}
-      <section>
-        <h2>2. Cart Quantity</h2>
-        <CartQuantity />
-      </section>
+        {/* Password Toggle */}
+        <section className="component-card">
+          <h2>3. Password Toggle</h2>
+          <PasswordToggle />
+        </section>
 
-      <hr />
+        {/* Theme Toggle */}
+        <section className="component-card">
+          <h2>4. Theme Toggle</h2>
+          <ThemeToggle />
+        </section>
 
-      {/* Password Toggle */}
-      <section>
-        <h2>3. Password Toggle</h2>
-        <PasswordToggle />
-      </section>
+        {/* Like Button */}
+        <section className="component-card">
+          <h2>5. Like Button</h2>
+          <LikeButton />
+        </section>
 
-      <hr />
+        {/* Todo List */}
+        <section className="component-card">
+          <h2>6. Todo List</h2>
+          <TodoList />
+        </section>
 
-      {/* Theme Toggle */}
-      <section>
-        <h2>4. Theme Toggle</h2>
-        <ThemeToggle />
-      </section>
-
-      <hr />
-
-      {/* Like Button */}
-      <section>
-        <h2>5. Like Button</h2>
-        <LikeButton />
-      </section>
-
-      <hr />
-
-      {/* Todo List */}
-      <section>
-        <h2>6. Todo List</h2>
-        <TodoList />
-      </section>
-
-      <hr />
-
-      {/* Register Form */}
-      <section>
-        <h2>7. Register Form</h2>
-        <RegisterForm />
-      </section>
+        {/* Register Form */}
+        <section className="component-card">
+          <h2>7. Register Form</h2>
+          <RegisterForm />
+        </section>
+      </div>
     </div>
   );
 }
