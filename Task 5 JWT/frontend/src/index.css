@@ -1,0 +1,73 @@
+:root {
+  --bg: #0d0f11;
+  --bg-panel: #15181b;
+  --bg-panel-raised: #1b1f23;
+  --border: #272c30;
+  --border-hover: #383f45;
+  --text: #e8eaed;
+  --text-dim: #8b929a;
+  --text-faint: #565d64;
+  --accent: #4ee2a3;
+  --accent-dim: #2f9a6f;
+  --danger: #ff6b6b;
+  --danger-dim: #8a3838;
+  --warn: #e8b64e;
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-display);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+}
+
+::selection {
+  background: var(--accent-dim);
+  color: #fff;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* Scrollbar, subtle */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+/* Reduced motion respect */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
