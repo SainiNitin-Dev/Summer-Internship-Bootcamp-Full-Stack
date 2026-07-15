@@ -1,0 +1,16 @@
+services:
+  backend:
+    build: ./backend
+    container_name: jwt-backend
+    restart: always
+    env_file:
+      - ./backend/.env
+    ports:
+      - "5000:5000"
+
+  frontend:
+    build: ./frontend
+    container_name: jwt-frontend
+    restart: always
+    ports:
+      - "8080:80"
